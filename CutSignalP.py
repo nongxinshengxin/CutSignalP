@@ -8,11 +8,12 @@ from collections import defaultdict
 
 class CutSignalp():
 
-    def __init__(self,fasta,posFile,column,output):
+    def __init__(self,fasta,posFile,column,output,module):
         self.fasta=fasta
         self.posFile=posFile
         self.column=column
         self.output=output
+        self.module=module
 
     def makeidex(self):
         with open(self.fasta) as f:
@@ -72,17 +73,22 @@ class CutSignalp():
             for geneid,seq in self.readSeq():
                 #print(len(geneid))
                 if posdict.get(geneid):
-                    w1.write(">"+geneid+"\n"+"M"+seq[posdict[geneid]:]+"\n")
+                    if self.module=="Protein":
+                        w1.write(">"+geneid+"\n"+"M"+seq[posdict[geneid]:]+"\n")
+                    else:
+                        cspos=posdict[geneid]*3
+                        w1.write(">"+geneid+"\n"+"ATG"+seq[cspos:]+"\n")
 
 
 def main():
     parser=argparse.ArgumentParser()
-    parser.add_argument('--fasta',type=str,help='蛋白序列的fasta文件')
+    parser.add_argument('--fasta',type=str,help='输入序列的fasta文件')
     parser.add_argument('--prediction',type=str,help='输入信号肽预测结果文件')
     parser.add_argument('--output',type=str,help='结果输出文件')
     parser.add_argument('--column',type=str,default="5",help='信号肽预测剪切位点所在列号')
+    parser.add_argument('--module',type=str,default="Protein",help='选择输入的fasta文件是蛋白序列/CDS序列。默认为蛋白序列')
     args=parser.parse_args()
-    cutsspp=CutSignalp(args.fasta,args.prediction,args.column,args.output)
+    cutsspp=CutSignalp(args.fasta,args.prediction,args.column,args.output,args.module)
     cutsspp.cutSP()
 
 if __name__=="__main__":
